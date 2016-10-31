@@ -49,15 +49,19 @@ class DateTimeType extends Type
      */
     public function convertToDatabaseValue($value, AbstractPlatform $platform)
     {
-        if (null === $value) {
-            return $value;
-        }
+        if( $value === null)
+          return null;
 
-        if ($value instanceof \DateTime) {
-            return $value->format($platform->getDateTimeFormatString());
-        }
+        $value = $value->format($platform->getDateTimeFormatString());
 
-        throw ConversionException::conversionFailedInvalidType($value, $this->getName(), ['null', 'DateTime']);
+        if( strlen($value) == 26 &&
+             $platform->getDateTimeFormatString() == 'Y-m-d H:i:s.u' &&
+             ($platform instanceof \Doctrine\DBAL\Platforms\SQLServer2008Platform
+              ||
+             $platform instanceof \Doctrine\DBAL\Platforms\SQLServer2005Platform
+             ) )
+            $value = substr($value, 0, \strlen($value)-3);
+        return $value;
     }
 
     /**
